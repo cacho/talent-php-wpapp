@@ -1,4 +1,4 @@
-# talent-php-wpapp
+# Events from EventBrite 
 
 ## Events Post types
 All events post type  show a list of events afetre the content body
