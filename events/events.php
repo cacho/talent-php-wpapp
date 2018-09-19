@@ -15,7 +15,9 @@ class Events{
         
         add_filter( 'the_content', array($this,'addEventContent') );
 
-        add_shortcode('twitterlink', array($this,'insertTwitterLink'));\
+        add_shortcode('twitterlink', array($this,'insertTwitterLink'));
+        add_shortcode('eventsWidget', array($this,'insertEventsWidget'));
+
         add_action('init',array($this,'create_post_type'));
 
         wp_register_style(
@@ -23,62 +25,68 @@ class Events{
             plugin_dir_url(__FILE__) . '/css/styles.css' // the URL of the stylesheet
         );
         wp_enqueue_style( 'events-stylesheet' );
+
     }
 
     static public function addEventContent($content){
         if(is_single()){
             if ('events' === get_post_type()) {
-                $addendum = " <h2>Events</h2>";
-                $content .= $addendum;
-                
-                $events = $this->getDataFromAPI();
-                $content.= '<div>';
-                foreach ($events['items'] as $event) {
-                    /**
-                    
-                    * Implement a style of your own to improve the look of the events list
-
-                    */
-                    
-                    $content.= '<div>';
-
-                    $content.= ' <div>
-                                    <img src="'. $event['image_url'].'" alt="">
-                                </div>';
-
-                    $content.=  '<div>
-                                    <h2>
-                                        '. $event['name'].'
-                                    </h2>
-                                </div>';
-
-                    $content.= '<div>
-                                '. $event['start'].' ---  '. $event['end'].' 
-                                </div>';
-
-                    $content.= '<div>
-                                    <p>
-                                    '. $event['description'].'
-                                    </p>
-                                </div>';
-                    
-                    $content.= '<div>
-                                    <div>
-                                        <h4>
-                                        '. $event['venue']['name'].'
-                                        </h4>
-                                        <p>
-                                        '. $event['venue']['address'].'
-                                        </p>
-                                    </div>  
-                                </div>';
-
-                    $content.= '</div>';
-                }
-            $content.= '</div>';
+                $content = $this-> getEventsContent($content);
             }
         }
         return $content;
+    }
+    private function getEventsContent($content){
+
+        $addendum = " <h2>Events</h2>";
+        $content .= $addendum;
+        
+        $events = $this->getDataFromAPI();
+        $content.= '<div>';
+        foreach ($events['items'] as $event) {
+            /**
+            
+            * Implement a style of your own to improve the look of the events list
+
+            */
+            
+            $content.= '<div>';
+
+            $content.= ' <div>
+                            <img src="'. $event['image_url'].'" alt="">
+                        </div>';
+
+            $content.=  '<div>
+                            <h2>
+                                '. $event['name'].'
+                            </h2>
+                        </div>';
+
+            $content.= '<div>
+                        '. $event['start'].' ---  '. $event['end'].' 
+                        </div>';
+
+            $content.= '<div>
+                            <p>
+                            '. $event['description'].'
+                            </p>
+                        </div>';
+            
+            $content.= '<div>
+                            <div>
+                                <h4>
+                                '. $event['venue']['name'].'
+                                </h4>
+                                <p>
+                                '. $event['venue']['address'].'
+                                </p>
+                            </div>  
+                        </div>';
+
+            $content.= '</div>';
+        }
+    $content.= '</div>';
+    return $content;
     }
 
     private function getDataFromAPI(){
@@ -91,6 +99,12 @@ class Events{
     public function insertTwitterLink($attr){
         $attr = shortcode_atts(array('username'=>'cachitweet','text'=>'visit my twitter'),$attr);
         return '<div><a href="https://twitter.com/'.$attr['username'].'" target="_blank">'.'Follow '.$attr['username']." ".$attr['text'].'</a></div>';
+    }
+
+    public function insertEventsWidget($attr){
+        $attr = shortcode_atts(array('location'=>'guadalajara','perPage'=>50),$attr);
+        $msg = 'Events from: '.$attr['location'].' Per Page: '.$attr['perPage'];
+        return $this->getEventsContent($msg);
     }
 
     function create_post_type() {
