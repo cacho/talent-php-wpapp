@@ -12,6 +12,10 @@ Text Domain: events
 class Events{
 
     public function __construct(){
+        add_action( 'admin_menu', array($this,'eventsPluginMenu') );
+
+        add_option( 'location', 'Guadalajara' , '', 'yes' );
+        add_option( 'perPage', '50' , '', 'yes' );
         
         add_filter( 'the_content', array($this,'addEventContent') );
 
@@ -26,6 +30,19 @@ class Events{
         );
         wp_enqueue_style( 'events-stylesheet' );
 
+    }
+
+    static public function eventsPluginMenu() {
+        add_options_page( 'Events Options', 'Events Plugin Options', 'manage_options', 'my-unique-identifier', array($this,'my_plugin_options') );
+    }
+
+    static public function my_plugin_options() {
+        if ( !current_user_can( 'manage_options' ) )  {
+            wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+        }
+        echo '<div class="wrap">';
+        echo '<p>Here is where the form would go if I actually had options.</p>';
+        echo '</div>';
     }
 
     static public function addEventContent($content){
@@ -118,7 +135,7 @@ class Events{
             'has_archive' => false,
           )
         );
-      }
+    }
 
 }
 $events = new Events();
