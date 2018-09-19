@@ -13,9 +13,9 @@ class Events{
     protected $currentPage;
     public function __construct(){
         $this->currentPage=1;
-        add_action( 'admin_menu', array($this,'eventsPluginMenu') );
         add_action('init',array($this,'create_post_type'));
-
+        add_action( 'admin_menu', array($this,'eventsPluginMenu') );
+        
         add_option( 'api_url', 'http://159.89.138.233/events' , '', 'yes' );
         add_option( 'location', 'Guadalajara' , '', 'yes' );
         add_option( 'perPage', '10' , '', 'yes' );
@@ -98,21 +98,37 @@ class Events{
         }
     }
 
-    static public function addEventContent($content){
+    static public function addEventContent($args){
+        $defaults = array (
+            'content' => 'Wrong',
+            'page' => 1,
+            'perPage' => 10
+       );
+       $args = wp_parse_args( $args, $defaults );
+     
         if(is_single()){
             if ('events' === get_post_type()) {
-                $content = $this-> getEventsContent($content);
+                $content = $this-> getEventsContent($args);
+            }else{
+                $content = get_the_content();
             }
         }
         return $content;
     }
 
-    private function getEventsContent($content){
-
+    private function getEventsContent($args){
+        $defaults = array (
+            'content' => 'Something went wrong.',
+            'page' => 1,
+            'perPage' => 10
+       );
+       $args = wp_parse_args( $args, $defaults );
+        
         $addendum = " <h2>Events</h2>";
         $content .= $addendum;
         
-        $events = $this->getDataFromAPI();
+        
+        $events = $this->getDataFromAPI($args);
         $content.= '<div>';
         foreach ($events['items'] as $event) {
             /**
@@ -163,8 +179,15 @@ class Events{
     return $content;
     }
 
-    private function getDataFromAPI(){
-        $api_request = (string)get_option('api_url')."?page=".(string)$this->currentPage."&size=".get_option('perPage');
+    private function getDataFromAPI($args){
+        $defaults = array (
+            'content' => 'Wrong',
+            'page' => 1,
+            'perPage' => 10
+        );
+        $args = wp_parse_args( $args, $defaults );
+
+        $api_request = (string)get_option('api_url')."?page=".(string)$args['page']."&size=".(string)$args['perPage'];
         $api_response = wp_remote_get( $api_request);
         $api_data = json_decode(wp_remote_retrieve_body( $api_response), true );
         return $api_data;
@@ -176,9 +199,16 @@ class Events{
     }
 
     public function insertEventsWidget($attr){
-        $attr = shortcode_atts(array('location'=>'guadalajara','perPage'=>get_option('perPage')),$attr);
-        $msg = 'Events from: '.$attr['location'].' Per Page: '.$attr['perPage'];
-        return $this->getEventsContent($msg);
+       $attr = shortcode_atts(array('content'=>'Something','page'=>1,'per_page'=>10),$attr);
+       
+        $msg = ' Per Page: '.$attr['perPage']. '...';
+        $attrs=array(
+            'content' => $msg ,
+            'page' => 1,
+            'perPage' => intval($attr['per_page'])
+        );
+       
+         return $this->getEventsContent($attrs);
     }
 
     function create_post_type() {
