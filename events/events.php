@@ -90,7 +90,7 @@ class Events{
             echo        '</p><hr />';
 
             echo    '<p class="submit">';
-            echo    '<input type="submit" name="Submit" class="button-primary" value="'. esc_attr_e('Save Changes') .'" />';
+            echo    '<input type="submit" name="Submit" class="button-primary" value="'. (string)esc_attr_e('Save Changes') .'" />';
             echo    '</p>';
 
             echo    '</form>';
@@ -106,6 +106,7 @@ class Events{
         }
         return $content;
     }
+
     private function getEventsContent($content){
 
         $addendum = " <h2>Events</h2>";
@@ -120,35 +121,38 @@ class Events{
 
             */
             
-            $content.= '<div>';
+            $content.= '<div class="event">';
 
-            $content.= ' <div>
+            $content.= ' <div class="event-image">
                             <img src="'. $event['image_url'].'" alt="">
                         </div>';
 
-            $content.=  '<div>
+            $content.=  '<div class="event-title">
                             <h2>
-                                '. $event['name'].'
+                                '. nl2br($event['name']).'
                             </h2>
                         </div>';
-
-            $content.= '<div>
-                        '. $event['start'].' ---  '. $event['end'].' 
+            $startDate = new DateTime($event['start']);
+            $endDate = new DateTime($event['end']);
+            $content.= '<div class="time-info">
+                        '.__('Begins: ').'<span class="ligther">' .$startDate->format('Y/m/d @ H:i ').'</span>'.
+                        ' ' .__('Ends: ').'<span class="ligther">'.$endDate->format('Y/m/d @ H:i ').'</span>' .' 
                         </div>';
 
-            $content.= '<div>
+            $content.= '<div class="event-description">
                             <p>
-                            '. $event['description'].'
+                            '. nl2br($event['description']).'
                             </p>
                         </div>';
             
-            $content.= '<div>
+            $content.= '<div class="event-venue">
+                         <h3>'.__('Venue Information:').'</h3>
                             <div>
                                 <h4>
-                                '. $event['venue']['name'].'
+                                '. nl2br($event['venue']['name']) .'
                                 </h4>
                                 <p>
-                                '. $event['venue']['address'].'
+                                '. nl2br($event['venue']['address']) .'
                                 </p>
                             </div>  
                         </div>';
