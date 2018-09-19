@@ -10,19 +10,20 @@ License: GPLv2 or later
 Text Domain: events
 */
 class Events{
-
+    protected $currentPage;
     public function __construct(){
+        $this->currentPage=1;
         add_action( 'admin_menu', array($this,'eventsPluginMenu') );
+        add_action('init',array($this,'create_post_type'));
 
+        add_option( 'api_url', 'http://159.89.138.233/events' , '', 'yes' );
         add_option( 'location', 'Guadalajara' , '', 'yes' );
-        add_option( 'perPage', '50' , '', 'yes' );
+        add_option( 'perPage', '10' , '', 'yes' );
         
         add_filter( 'the_content', array($this,'addEventContent') );
 
         add_shortcode('twitterlink', array($this,'insertTwitterLink'));
         add_shortcode('eventsWidget', array($this,'insertEventsWidget'));
-
-        add_action('init',array($this,'create_post_type'));
 
         wp_register_style(
             'events-stylesheet', // handle name
@@ -33,16 +34,68 @@ class Events{
     }
 
     static public function eventsPluginMenu() {
-        add_options_page( 'Events Options', 'Events Plugin Options', 'manage_options', 'my-unique-identifier', array($this,'my_plugin_options') );
+        add_options_page( 'Events Options', 'Events Plugin Options', 'manage_options', 'events-unique-identifier', array($this,'events_plugin_options') );
     }
 
-    static public function my_plugin_options() {
+    static public function events_plugin_options() {
         if ( !current_user_can( 'manage_options' ) )  {
             wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
         }
-        echo '<div class="wrap">';
-        echo '<p>Here is where the form would go if I actually had options.</p>';
-        echo '</div>';
+
+        $opt_name1 = 'location';
+        $hidden_field_name = 'event_submit_hidden';
+        $data_field_name_opt1 = 'location';
+
+        $opt_name2 = 'perPage';
+        $data_field_name_opt2 = 'perPage';
+
+        $opt_name3 = 'api_url';
+        $data_field_name_opt3 = 'apiUrl';
+
+        $opt_val1 = get_option( $opt_name1 );
+        $opt_val2 = get_option( $opt_name2 );
+        $opt_val3 = get_option( $opt_name3 );
+
+        if( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ) {
+            // Read their posted value
+            $opt_val1 = $_POST[ $data_field_name_opt1 ];
+            $opt_val2 = $_POST[ $data_field_name_opt2 ];
+            $opt_val3 = $_POST[ $data_field_name_opt3 ];
+
+            // Save the posted value in the database
+            update_option( $opt_name1, $opt_val1 );
+            update_option( $opt_name2, $opt_val2 );
+            update_option( $opt_name3, $opt_val3 );
+
+            echo '<div class="wrap">';
+            echo '<div class="updated"><p><strong>'. _e('settings saved.', 'menu-test' ) .'</strong></p></div>';
+            echo '</div>';
+        }else{
+            echo '<div class="wrap">';
+            echo '<p>Here is where you can modify events plugin options</p>';
+        
+            echo '<form name="form1" method="post" action="">';
+            echo        '<input type="hidden" name="'.  $hidden_field_name .'" value="Y">';
+
+            echo        '<p>'. _e("Event API URL:", 'menu-test' ) ;
+            echo        '<input type="text" name="'.  $data_field_name_opt3 .'" value="'.  $opt_val3 .'" size="80">';
+            echo        '</p>';
+
+            echo        '<p>'. _e("Event Location:", 'menu-test' ) ;
+            echo        '<input type="text" name="'.  $data_field_name_opt1 .'" value="'.  $opt_val1 .'" size="20">';
+            echo        '</p>';
+
+            echo        '<p>'. _e("Event per Page:", 'menu-test' ) ;
+            echo        '<input type="number" name="'.  $data_field_name_opt2 .'" value="'.  $opt_val2 .'" >';
+            echo        '</p><hr />';
+
+            echo    '<p class="submit">';
+            echo    '<input type="submit" name="Submit" class="button-primary" value="'. esc_attr_e('Save Changes') .'" />';
+            echo    '</p>';
+
+            echo    '</form>';
+            echo    '</div>';
+        }
     }
 
     static public function addEventContent($content){
@@ -107,7 +160,7 @@ class Events{
     }
 
     private function getDataFromAPI(){
-        $api_request = "http://159.89.138.233/events?page=1&size=10";
+        $api_request = (string)get_option('api_url')."?page=".(string)$this->currentPage."&size=".get_option('perPage');
         $api_response = wp_remote_get( $api_request);
         $api_data = json_decode(wp_remote_retrieve_body( $api_response), true );
         return $api_data;
@@ -119,7 +172,7 @@ class Events{
     }
 
     public function insertEventsWidget($attr){
-        $attr = shortcode_atts(array('location'=>'guadalajara','perPage'=>50),$attr);
+        $attr = shortcode_atts(array('location'=>'guadalajara','perPage'=>get_option('perPage')),$attr);
         $msg = 'Events from: '.$attr['location'].' Per Page: '.$attr['perPage'];
         return $this->getEventsContent($msg);
     }
