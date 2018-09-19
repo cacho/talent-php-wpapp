@@ -131,11 +131,6 @@ class Events{
         $events = $this->getDataFromAPI($args);
         $content.= '<div>';
         foreach ($events['items'] as $event) {
-            /**
-            
-            * Implement a style of your own to improve the look of the events list
-
-            */
             
             $content.= '<div class="event">';
 
@@ -225,4 +220,5 @@ class Events{
     }
 
 }
+
 $events = new Events();
