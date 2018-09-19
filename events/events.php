@@ -10,10 +10,14 @@ License: GPLv2 or later
 Text Domain: events
 */
 class Events{
+
     public function __construct(){
+        
         add_filter( 'the_content', array($this,'addEventContent') );
+
         add_shortcode('twitterlink', array($this,'insertTwitterLink'));\
         add_action('init',array($this,'create_post_type'));
+
         wp_register_style(
             'events-stylesheet', // handle name
             plugin_dir_url(__FILE__) . '/css/styles.css' // the URL of the stylesheet
@@ -23,56 +27,57 @@ class Events{
 
     static public function addEventContent($content){
         if(is_single()){
-            $addendum = " <h2>Events</h2>";
-            $content .= $addendum;
-
-            $events = $this->getDataFromAPI();
-            foreach ($events['items'] as $event) {
-                /**
-                * - Finish the implementation of the events list to show the following fields:
-                * - Thumbnail image with the image of the event
-                * - Event name
-                * - Event description
-                * - Start and end dates
-                * - Venue information: name and address
-                * Implement a style of your own to improve the look of the events list
-
-                 */
-                $content.= '<div>';
-                $content.= '<div>';
-                $content.= ' <div>
-                                <img src="'. $event['image_url'].'" alt="">
-                            </div>';
-                $content.=  '<div>
-                                <h1>
-                                    '. $event['name'].'
-                                </h1>
-                            </div>';
-                $content.= '<div>
-                            '. $event['start'].' ---  '. $event['end'].' 
-                        </div>';
-                $content.= '<div>
-                                <p>
-                                '. $event['description'].'
-                                </p>
-                            </div>';
+            if ('events' === get_post_type()) {
+                $addendum = " <h2>Events</h2>";
+                $content .= $addendum;
                 
-                $content.= '<div>
-                                <div>
-                                    <h3>
-                                    '. $event['venue']['name'].'
-                                    </h3>
-                                </div>
-                                <div>
+                $events = $this->getDataFromAPI();
+                $content.= '<div>';
+                foreach ($events['items'] as $event) {
+                    /**
+                    
+                    * Implement a style of your own to improve the look of the events list
+
+                    */
+                    
+                    $content.= '<div>';
+
+                    $content.= ' <div>
+                                    <img src="'. $event['image_url'].'" alt="">
+                                </div>';
+
+                    $content.=  '<div>
+                                    <h2>
+                                        '. $event['name'].'
+                                    </h2>
+                                </div>';
+
+                    $content.= '<div>
+                                '. $event['start'].' ---  '. $event['end'].' 
+                                </div>';
+
+                    $content.= '<div>
                                     <p>
-                                    '. $event['venue']['address'].'
+                                    '. $event['description'].'
                                     </p>
-                                </div>  
-                            </div>';
-                $content.= '</div>';
+                                </div>';
+                    
+                    $content.= '<div>
+                                    <div>
+                                        <h4>
+                                        '. $event['venue']['name'].'
+                                        </h4>
+                                        <p>
+                                        '. $event['venue']['address'].'
+                                        </p>
+                                    </div>  
+                                </div>';
+
+                    $content.= '</div>';
+                }
+            $content.= '</div>';
             }
         }
-       
         return $content;
     }
 
@@ -101,6 +106,5 @@ class Events{
         );
       }
 
-      
 }
 $events = new Events();
